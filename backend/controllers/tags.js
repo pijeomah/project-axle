@@ -135,11 +135,14 @@ export const deactivate = async(req,res) => {
         const {data,error} = await supabase 
         .from('tags')
         .update({
-            is_system: false
+            is_active: false
         })
         .eq('id', id )
         .eq('user_id', userId)
         .select()
+        if(!data || data.length===0){
+            return "Tag not found"
+        }
         if(error) throw error
         return res.status(200).json({data})
     } catch (error) {

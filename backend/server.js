@@ -2,8 +2,8 @@ import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
 import authV2Routes from './routes/v2/auth.js'
-// import transactionV2Routes from './routes/v2/transactions.js'
-// import walletsV2Routes from './routes/v2/accounts.js'
+import transactionsV2Routes from './routes/v2/transactions.js'
+import walletsV2Routes from './routes/v2/wallets.js'
 import tagsV2Routes from './routes/v2/tags.js'
 import  supabase  from './config/supabase.js'
 
@@ -26,8 +26,8 @@ app.get('/', (req, res) =>{
 
 
 app.use('/api/v2/auth', authV2Routes)
-// app.use('/api/v2/wallets', walletV2Routes)
-// app.use('/api/v2/transactions', transactionsV2Routes)
+app.use('/api/v2/wallets', walletsV2Routes)
+app.use('/api/v2/transactions', transactionsV2Routes)
 app.use('/api/v2/tags', tagsV2Routes)
 
 

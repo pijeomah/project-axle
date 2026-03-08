@@ -6,7 +6,7 @@ import {useNavigate} from 'react-router-dom'
 
 const Dashboard = ()=>{
 
-    const { user, signOut, loading} = useAuth()
+    const { user, signOut} = useAuth()
     const navigate = useNavigate()
     const [isLoggingOut, setIsLoggingOut ] = useState(false)
 

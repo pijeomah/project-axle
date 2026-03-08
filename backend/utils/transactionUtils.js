@@ -72,7 +72,7 @@ export async function getTagOrThrow(userId, tagId, expectedType){
     return data
 }
 
-export function debit({walletId, tagId, userId, amount}){
+export function debit({walletId, tagId, amount}){
     return {
         wallet_id: walletId,
         tag_id: tagId,
@@ -83,13 +83,14 @@ export function debit({walletId, tagId, userId, amount}){
 }
 
 
-export function  credit({walletId, userId, tagId, amount}){
+export function  credit({walletId, tagId, amount}){
     return {
        
-        tag_id: tagId,
-        direction: 'credit',
+        
         wallet_id: walletId,
-        amount 
+        tag_id: tagId,
+        amount,
+        direction: 'credit',
     }
 }
 

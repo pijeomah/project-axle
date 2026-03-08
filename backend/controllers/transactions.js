@@ -118,12 +118,14 @@ async function handleTransfer({
         walletId: destination_wallet_id,
         amount, 
         tag_id: tag_id,
+        direction: 'debit'
         
       }), 
       credit({
         walletId: source_wallet_id,
         tag_id: tag_id,
         amount,
+        direction: 'credit'
        
       })
     ]
@@ -152,12 +154,14 @@ async function handleExpense({
       debit({
         walletId: systemWallet.id,
         tagId: tag_id,
-        amount
+        amount,
+        direction: 'debit'
       }),
       credit({
         walletId: source_wallet_id,
         tagId: tag_id,
-        amount 
+        amount,
+        direction: 'credit'
       })
     ]
 
@@ -173,58 +177,26 @@ async function handleIncome({
       amount, 
       destination_wallet_id, 
       tag_id}){
-    const { data: wallet, error: walletError } = await supabase
-        .from('wallets')
-        .select('id, name, type')
-        .eq('id', destination_wallet_id)
-        .eq('user_id', userId)
-        .single()
-
-    if (walletError || !wallet) {
-        throw new Error('Wallet does not exist or does not belong to the user')
-    }
-        const{data: tagData, error:tagError} = await supabase
-      .from('wallets')
-      .select('id,type')
-      .eq('user_id', userId)
-      .eq('id', tag_id)
-      .eq('type', 'income')
-      .single()
-
-      if(tagError || !tagData){
-        throw new Error(`Tag must exist and must be of type "transfer"`) 
-      }
-      const {data: systemWallet, error: systemError} = await supabase
-          .from('wallets')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('type', 'system')
-          .single()
-        if(!systemWallet || systemError){
-          throw new Error(`System Wallet not found. Please contact support`)
-        }
-
+    await getWalletOrThrow(userId, destination_wallet_id)
+    await getTagOrThrow(userId, tag_id, 'income')
+    const systemWallet = await getSystemWalletOrThrow(userId)
         return{
-          transactionData:{
-            user_id: userId,
-            description: description,
-            occurred_at
-          },
+    transactionData:baseTransaction({userId, occurred_at, description}),
           transactionLines:[
-          {
-            wallet_id: destination_wallet_id,
+          debit({
+            walletId: destination_wallet_id,
             amount: amount,
-            tag_id: tag_id,
+            tagId: tag_id,
             direction: 'debit',
             
-          },
-          {
-            wallet_id: systemWallet.id,
+          }),
+          credit({
+            walletId: systemWallet.id,
             amount: amount,
-            tag_id: tag_id,
+            tagId: tag_id,
             direction: 'credit',
           
-          }
+          })
           ]
 
         }
@@ -237,16 +209,7 @@ async function handleOpeningBalance({
             description,
             amount,
 }){
-    const { data: wallets, error: walletError } = await supabase
-      .from('wallets')
-      .select('name, id, type')
-      .eq('id', wallet_id)
-      .eq('user_id', userId)
-      .single()
-
-      if(walletError || !wallets ){
-        throw new Error('Wallet does not exist or does not belong to user')
-      }
+    await getWalletOrThrow(userId, wallet_id)
       let openingBalanceTag
       const { data: existingTag } = await supabase
        .from('tags')
@@ -264,7 +227,7 @@ async function handleOpeningBalance({
             .insert({
               user_id: userId,
                       name: 'opening balance',
-                      type: 'transfer',
+                      type: 'OPENING_BALANCE',
                       is_active: true
             })
             .select('id')
@@ -277,37 +240,26 @@ async function handleOpeningBalance({
        }
 
        
-      const {data: systemWallet, error: systemError} = await supabase
-          .from('wallets')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('type', 'system')
-          .single()
-        if(!systemWallet || systemError){
-          throw new Error(`System Wallet not found. Please contact support`)
-        }
+    const systemWallet = await getSystemWalletOrThrow(userId)
+
         return {
-          transactionData: {
-            user_id: userId,
-            occurred_at,
-            description: description ||  'Opening Balance'
-          },
+            transactionData:baseTransaction({userId, occurred_at, description}),
           transactionLines: [
-            {
-              wallet_id: wallet_id,
-              tag_id: openingBalanceTag.id,
+            debit({
+              walletId: wallet_id,
+              tagId: openingBalanceTag.id,
               amount: amount,
               direction: 'debit',
               
 
-            },
-            {
-              wallet_id: systemWallet.id,
-              tag_id: openingBalanceTag.id,
+            }),
+            credit({
+              walletId: systemWallet.id,
+              tagId: openingBalanceTag.id,
               amount: amount, 
               direction: 'credit',
                       
-             }
+             })
           ]
         }
     }
@@ -316,6 +268,7 @@ async function handleOpeningBalance({
     const {transactionData, transactionLines} =  transactionPayload
     console.log('transactionPayload', transactionPayload);
     console.log('transactionData', transactionPayload.transactionData);
+   
     const {data: transaction, error: transError} = await supabase 
         .from('transactions')
         .insert(transactionData)
@@ -354,11 +307,90 @@ async function handleOpeningBalance({
 
 
 
+export const getOne = async(req,res) => {
+  try {
+    const userId = req.user.id
+    const transactionId = req.params.id 
+    const { data, error} = await supabase
+    .from('transactions_with_amount')
+    .select('occurred_at, description, amount')
+    .eq('user_id', userId)
+    .eq('id', transactionId)
+    .single()
+    if(error) throw Error
+    return res.status(200).json({data})
+  } catch (error) {
+    console.error(error.message)
+        return res.status(500).json({error: 'Internal Server Error'})
+  }
+
+}
+
+export const list = async(req,res) => {
+    try {
+        const page = parseInt(req.query.page)|| 1
+        const limit = parseInt(req.query.limit) || 10
+
+        const from = (page -1) * limit
+        const to = from + limit -1
+        const userId = req.user.id
+        const {data, count, error} = await supabase 
+                .from('transactions_with_amount')
+                .select('*', {count: 'exact'})
+                .eq('user_id', userId)
+                .order('occurred_at', {ascending: false})
+                .range(from, to)
+                if(error) throw error
+
+                res.status(200).json({
+                    data,
+                    pagination: {
+                        total_records:count,
+                        current_page: page,
+                        total_pages: Math.ceil(count/limit),
+                        per_page: limit
+                    }
+                })
+
+    } catch (error) {
+        res.status(500).json({error: error.message})
+    }
+
+}
 
 
 
+export const archive = async(req,res)=> {
+  try {
+    const userId = req.user.id
+    const transId = req.params.id
+    const {data: transaction, error: fetchError} = await supabase 
+          .from('transactions')
+          .select('id, is_voided')
+          .eq('id', transId)
+          .eq('user_id', userId)
+          .single()
+          if(fetchError || !transaction){
+    return res.status(404).json({error: `Transaction not found`}) }
 
+    if(transaction.is_voided){
+       return res.status(400).json({ error: 'Transaction already archived' })
+    }
 
+     const { data, error: updateError } = await supabase
+      .from('transactions')
+      .update({ is_voided: true })
+      .eq('id', transId)
+      .eq('user_id', userId)
+      .select()
+      .single()
+    if (updateError) throw updateError
+    return res.status(200).json(data)
+  } catch (error) {
+    console.error(error.message)
+        return res.status(500).json({error: 'Internal Server Error'})
+  }
+}
 
 
 

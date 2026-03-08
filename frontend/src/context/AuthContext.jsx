@@ -2,6 +2,7 @@ import React, { createContext,useState,useEffect,useContext } from 'react'
 import {supabase} from '../services/supabase'
 
 const AuthContext = createContext({})
+const BASE_URL = 'http://localhost:5000/api/v2'
 
 export const AuthProvider = ({children}) => {
     const [user, setUser] = useState(null)
@@ -9,44 +10,75 @@ export const AuthProvider = ({children}) => {
 
 
 useEffect(()=> {
-    const getSession= async ()=>{
-        const {data : {session}} = await supabase.auth.getSession()
-        setUser(session?.user ?? null)
+   const validateSession = async () => {
+    const token = localStorage.getItem('axle_token')
+    if(!token){
         setLoading(false)
-
+        return
     }
-    getSession()
 
-    const {data : {subscription} } = supabase.auth.onAuthStateChange((_event, session) =>{
-        setUser(session?.user ?? null)
+    try {
+        const response = await fetch (`${BASE_URL}/auth/me`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type' : 'application/json'
+
+            }
+        })
+        if(response.ok){
+            const data = await response.json()
+            setUser(data.user)
+        }else{
+            localStorage.removeItem('axle_token')
+            setUser(null)
+
+        }
+    } catch (error) {
+        console.error("Auth validation failed:", error)
+        setUser(null)
+    }finally{
         setLoading(false)
-    })
-        return ()=> subscription.unsubscribe()
+    }
+   }
 
-    }, [])
+   validateSession()
+}, [])
 
     const signUp = async(email, password ) =>{
-        const response = await supabase.auth.signUp({
-            email, 
-            password
+        const response = await fetch(`${BASE_URL}/auth/signup`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({email, password})
         })
-        return response 
+        const data = await response.json()
+        if(response.ok){
+            localStorage.setItem('axle-token', data.token)
+            setUser(data.user)
+
+        }
+
+        return data
     }
 
      const signIn = async(email, password) => {
-        const response = await supabase.auth.signInWithPassword({
-            email,
-            password
-        })
-
-        return response
+    const response = await fetch(`${BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email,password})
+    })
+         const data = await response.json()
+         if(response.ok){
+            localStorage.setItem('axle-token', data.token)
+            setUser(data.user)
+         }
+        return data
     }
 
     const signOut = async()=>{
-        const response = await supabase.auth.signOut()
+        localStorage.removeItem(axle-token)
         setUser(null)
 
-        return response
     }
     const value = {
         user, 

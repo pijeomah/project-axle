@@ -17,6 +17,10 @@ export const signup = async (req, res) => {
         res.status(400).json({ error: error.message })
     }
 }
+// Validate sessions
+export const me = async (req, res) => {
+    return res.status(200).json({ user: req.user })
+}
 
 // 2. LOGIN (Get the Token)
 export const login = async (req, res) => {

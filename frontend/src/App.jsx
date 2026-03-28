@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import ProtectedRoute from './components/ProtectedRoute'
+import Layout from './components/Layout'
 import './App.css'
 
 
@@ -16,14 +17,13 @@ function App() {
 
        <Route path="/signup" element={<Signup/>}/>
        {/* Protected Routes */}
-       <Route
-       path="/dashboard"
-       element={
+       <Route path="/dashboard"element={
         <ProtectedRoute>
-          <Dashboard/>
-        </ProtectedRoute>
-       }
-       
+            <Layout>
+              <Dashboard />
+            </Layout>
+           
+          </ProtectedRoute>}
        />  
 
     </Routes>

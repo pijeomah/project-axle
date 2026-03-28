@@ -100,7 +100,8 @@ return (
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-indigo-600 text-white py-2.5 rounded-lg
+          style={{ backgroundColor: '#1A3C34', hover: '#1A3C34' }}
+          className="w-full text-white py-2.5 rounded-lg
                      hover:bg-indigo-700 disabled:opacity-50
                      disabled:cursor-not-allowed transition duration-200 font-medium"
         >
@@ -112,6 +113,7 @@ return (
       <p className="text-sm text-center text-gray-500 mt-6">
         Do not have an account?{" "}
         <span
+        style={{ color: '#1A3C34'}}
           onClick={() => navigate("/signup")}
           className="text-indigo-600 hover:underline cursor-pointer"
         >

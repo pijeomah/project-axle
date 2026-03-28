@@ -1,5 +1,5 @@
 import React, { createContext,useState,useEffect,useContext } from 'react'
-import {supabase} from '../services/supabase'
+// import {supabase} from '../services/supabase'
 
 const AuthContext = createContext({})
 const BASE_URL = 'http://localhost:5000/api/v2'
@@ -11,7 +11,7 @@ export const AuthProvider = ({children}) => {
 
 useEffect(()=> {
    const validateSession = async () => {
-    const token = localStorage.getItem('axle_token')
+    const token = localStorage.getItem('axle-token')
     if(!token){
         setLoading(false)
         return
@@ -30,7 +30,7 @@ useEffect(()=> {
             const data = await response.json()
             setUser(data.user)
         }else{
-            localStorage.removeItem('axle_token')
+            localStorage.removeItem('axle-token')
             setUser(null)
 
         }
@@ -76,7 +76,7 @@ useEffect(()=> {
     }
 
     const signOut = async()=>{
-        localStorage.removeItem(axle-token)
+        localStorage.removeItem('axle-token')
         setUser(null)
 
     }

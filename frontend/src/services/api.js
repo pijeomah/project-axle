@@ -22,8 +22,8 @@ const apiFetch = async(endpoint, options = {})=> {
         }
         return await response.json()
         } catch (error) {
-           console.error("API Fetch Error:", err.message);
-            throw err;
+           console.error("API Fetch Error:", error.message);
+            throw error;
         }
        
 

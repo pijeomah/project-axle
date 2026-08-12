@@ -42,9 +42,14 @@ const CreateTransactionModal = ({ isOpen, onClose, onSuccess }) => {
   const [sourceWalletId, setSourceWalletId] = useState('')
   const [destinationWalletId, setDestinationWalletId] = useState('')
   const [tagId, setTagId] = useState('')
+  const [isCreatingTag, setIsCreatingTag] = useState(false)
+  const [newTagName, setNewTagName] = useState('')
+  const [tagError, setTagError] = useState('')
+
 
   const [wallets, setWallets] = useState([])
   const [tags, setTags] = useState([])
+
   const [loadingData, setLoadingData] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -88,6 +93,9 @@ const CreateTransactionModal = ({ isOpen, onClose, onSuccess }) => {
     setSourceWalletId('')
     setDestinationWalletId('')
     setTagId('')
+    setIsCreatingTag(false)
+    setNewTagName('')
+    setTagError('')
     setError('')
   }
 
@@ -95,6 +103,29 @@ const CreateTransactionModal = ({ isOpen, onClose, onSuccess }) => {
     resetForm()
     onClose()
   }
+
+  const handleCreateTag = async () => {
+  setTagError('')
+  if (!newTagName.trim()) {
+    setTagError('Name is required.')
+    return
+  }
+  try {
+    const res = await apiFetch('/tags/create', {
+      method: 'POST',
+      body: { name: newTagName.trim(), type: actionType.toLowerCase() },
+    })
+    const created = res.newTag
+    if (created) {
+      setTags(prev => [...prev, created])
+      setTagId(created.id)
+    }
+    setNewTagName('')
+    setIsCreatingTag(false)
+  } catch (err) {
+    setTagError(err.message || 'Failed to create tag.')
+  }
+}
 
   const handleSubmit = async () => {
     setError('')
@@ -128,7 +159,7 @@ const CreateTransactionModal = ({ isOpen, onClose, onSuccess }) => {
       }
     }
     if (!tagId) {
-      setError('Please select a tag.')
+      setError('Please select a category.')
       return
     }
 
@@ -209,7 +240,7 @@ const CreateTransactionModal = ({ isOpen, onClose, onSuccess }) => {
           {ACTION_TYPES.map(type => (
             <button
               key={type}
-              onClick={() => { setActionType(type); setTagId(''); setWalletId(''); setSourceWalletId(''); setDestinationWalletId('') }}
+              onClick={() => { setActionType(type); setTagId(''); setWalletId(''); setSourceWalletId(''); setDestinationWalletId(''); setIsCreatingTag; setNewTagName; setTagError }}
               style={{
                 padding: '8px',
                 borderRadius: '8px',
@@ -318,36 +349,92 @@ const CreateTransactionModal = ({ isOpen, onClose, onSuccess }) => {
             )}
 
             {/* Tags */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={labelStyle}>Tag</label>
-              {filteredTags.length === 0 ? (
-                <p style={{ fontSize: '13px', color: '#9CA3AF', marginTop: '4px' }}>
-                  No {actionType.toLowerCase()} tags yet. Create one in Settings.
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
-                  {filteredTags.map(tag => (
-                    <button
-                      key={tag.id}
-                      onClick={() => setTagId(tagId === tag.id ? '' : tag.id)}
-                      style={{
-                        padding: '5px 12px',
-                        borderRadius: '99px',
-                        fontSize: '12px',
-                        cursor: 'pointer',
-                        border: tagId === tag.id ? `2px solid ${SIDEBAR_GREEN}` : '1px solid #E5E7EB',
-                        backgroundColor: tagId === tag.id ? SIDEBAR_GREEN : 'transparent',
-                        color: tagId === tag.id ? '#FFFFFF' : '#6B7280',
-                        fontWeight: tagId === tag.id ? 500 : 400,
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      {tag.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+           {/* Tags */}
+<div style={{ marginBottom: '20px' }}>
+  <label style={labelStyle}>Tag</label>
+  {isCreatingTag ? (
+    <div style={{ display: 'flex', gap: '6px', marginTop: '4px', alignItems: 'center' }}>
+      <input
+        autoFocus
+        style={{ ...inputStyle, flex: 1 }}
+        value={newTagName}
+        onChange={e => setNewTagName(e.target.value)}
+        placeholder="New tag name"
+        onKeyDown={e => e.key === 'Enter' && handleCreateTag()}
+      />
+      <button
+        onClick={handleCreateTag}
+        style={{
+          padding: '8px 14px',
+          borderRadius: '8px',
+          border: 'none',
+          backgroundColor: SIDEBAR_GREEN,
+          color: '#FFFFFF',
+          fontWeight: 600,
+          fontSize: '13px',
+          cursor: 'pointer',
+        }}
+      >
+        Add
+      </button>
+      <button
+        onClick={() => { setIsCreatingTag(false); setNewTagName(''); setTagError('') }}
+        style={{
+          padding: '8px 14px',
+          borderRadius: '8px',
+          border: '1px solid #E5E7EB',
+          backgroundColor: 'transparent',
+          color: '#6B7280',
+          fontWeight: 500,
+          fontSize: '13px',
+          cursor: 'pointer',
+        }}
+      >
+        Cancel
+      </button>
+    </div>
+  ) : (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+      {filteredTags.map(tag => (
+        <button
+          key={tag.id}
+          onClick={() => setTagId(tagId === tag.id ? '' : tag.id)}
+          style={{
+            padding: '5px 12px',
+            borderRadius: '99px',
+            fontSize: '12px',
+            cursor: 'pointer',
+            border: tagId === tag.id ? `2px solid ${SIDEBAR_GREEN}` : '1px solid #E5E7EB',
+            backgroundColor: tagId === tag.id ? SIDEBAR_GREEN : 'transparent',
+            color: tagId === tag.id ? '#FFFFFF' : '#6B7280',
+            fontWeight: tagId === tag.id ? 500 : 400,
+            transition: 'all 0.15s',
+          }}
+        >
+          {tag.name}
+        </button>
+      ))}
+      <button
+        onClick={() => setIsCreatingTag(true)}
+        style={{
+          padding: '5px 12px',
+          borderRadius: '99px',
+          fontSize: '12px',
+          cursor: 'pointer',
+          border: `1px dashed #9CA3AF`,
+          backgroundColor: 'transparent',
+          color: '#6B7280',
+          fontWeight: 400,
+        }}
+      >
+        + New tag
+      </button>
+    </div>
+  )}
+  {tagError && (
+    <p style={{ color: '#DC2626', fontSize: '12px', marginTop: '6px' }}>{tagError}</p>
+  )}
+</div>
 
             {/* Error */}
             {error && (

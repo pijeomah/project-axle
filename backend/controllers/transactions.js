@@ -216,7 +216,7 @@ async function handleOpeningBalance({
        .select('id')
        .eq('name', 'opening balance')
        .eq('user_id', userId)
-       .eq('type', 'transfer')
+       .eq('type', 'opening_balance')
        .maybeSingle()
 
        if(existingTag){
@@ -227,7 +227,7 @@ async function handleOpeningBalance({
             .insert({
               user_id: userId,
                       name: 'opening balance',
-                      type: 'OPENING_BALANCE',
+                      type: 'opening_balance',
                       is_active: true
             })
             .select('id')

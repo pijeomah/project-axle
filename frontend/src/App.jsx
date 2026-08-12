@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Transactions from './pages/Transactions'
 import './App.css'
+import Settings from './pages/Settings'
 
 
 const RootRedirect  = () => {
@@ -42,6 +43,14 @@ function App() {
           </ProtectedRoute>}
        />  
 
+        <Route path="/settings"element={
+        <ProtectedRoute>
+            <Layout onTransactionCreated={() => setRefreshKey(k => k + 1)}>
+              <Settings/>
+            </Layout>
+           
+          </ProtectedRoute>}
+       />  
     </Routes>
     </BrowserRouter>
   )

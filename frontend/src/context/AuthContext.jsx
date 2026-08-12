@@ -2,7 +2,7 @@ import React, { createContext,useState,useEffect,useContext } from 'react'
 // import {supabase} from '../services/supabase'
 
 const AuthContext = createContext({})
-const BASE_URL = 'http://localhost:5000/api/v2'
+const BASE_URL = import.meta.env.VITE_API_URL
 
 export const AuthProvider = ({children}) => {
     const [user, setUser] = useState(null)

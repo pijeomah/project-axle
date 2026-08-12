@@ -74,10 +74,7 @@ export const updateCategories = async(req,res)=> {
             const {id} = req.params
             const userId = req.user.id
 
-                const accountId = await getAccountId(userId)
-                if(!accountId){
-                    return(res.status(500).json({error: 'Unauthorized user account'}))
-                }
+               
 
             const { data,error } = await supabase 
             .from('categories')

@@ -184,43 +184,86 @@ const ItemManager = ({ title, items, setItems, types, endpoint, showType = true 
       {formError && (
         <p style={{ color: '#DC2626', fontSize: '13px', marginBottom: '16px' }}>{formError}</p>
       )}
-
-        {formError && (
-  <p style={{ color: '#DC2626', fontSize: '13px', marginBottom: '16px' }}>{formError}</p>
-)}
-
-{items.length === 0 ? (
-  <div style={{ textAlign: 'center', padding: '32px 0', color: '#9CA3AF' }}>
-    No wallets yet.
-  </div>
-) : (
-  items.map(item => (
-    <div
-      key={item.id}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        padding: '12px 0',
-        borderBottom: '1px solid #F3F4F6',
-      }}
-    >
-   
-   
-
-          <span style={{ flex: 1, fontSize: '14px', fontWeight: 500, color: '#111827' }}>
-  {item.name}
-</span>
-<button
-  onClick={() => handleDeactivate(item.id)}
-  disabled={deletingId === item.id}
-  style={iconButtonStyle('#DC2626')}
-  title="Remove"
->
-  <i className="fa-solid fa-trash" />
-</button>
-         
-    </div>
+    {items.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '32px 0', color: '#9CA3AF' }}>
+          No {title.toLowerCase()} yet.
+        </div>
+      ) : (
+        items.map(item => (
+          <div
+            key={item.id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '12px 0',
+              borderBottom: '1px solid #F3F4F6',
+            }}
+          >
+            {editingId === item.id ? (
+              <>
+                <input
+                  style={{ ...inputStyle, flex: 1 }}
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  autoFocus
+                />
+                {showType && (
+                <select
+                  style={{ ...inputStyle, width: '160px' }}
+                  value={editType}
+                  onChange={e => setEditType(e.target.value)}
+                >
+                  {types.map(t => (
+                    <option key={t} value={t}>{formatType(t)}</option>
+                  ))}
+                </select>
+                )}
+                <button
+                  onClick={() => handleSaveEdit(item.id)}
+                  disabled={savingEdit}
+                  style={iconButtonStyle('#16A34A')}
+                  title="Save"
+                >
+                  <i className="fa-solid fa-check" />
+                </button>
+                <button onClick={cancelEdit} style={iconButtonStyle('#9CA3AF')} title="Cancel">
+                  <i className="fa-solid fa-xmark" />
+                </button>
+              </>
+            ) : (
+              <>
+                <span style={{ flex: 1, fontSize: '14px', fontWeight: 500, color: '#111827', textTransform: 'capitalize' }}>
+                  {item.name}
+                </span>
+                {showType && (
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 500,
+                    padding: '3px 8px',
+                    borderRadius: '99px',
+                    backgroundColor: '#EFF6FF',
+                    color: '#2563EB',
+                  }}
+                >
+                  {formatType(item.type)}
+                </span>
+                )}
+                <button onClick={() => startEdit(item)} style={iconButtonStyle('#6B7280')} title="Edit">
+                  <i className="fa-solid fa-pen" />
+                </button>
+                <button
+                  onClick={() => handleDeactivate(item.id)}
+                  disabled={deletingId === item.id}
+                  style={iconButtonStyle('#DC2626')}
+                  title="Remove"
+                >
+                  <i className="fa-solid fa-trash" />
+                </button>
+              </>
+            )}
+          </div>
         ))
       )}
     </div>
@@ -452,15 +495,13 @@ const Settings = () => {
           {error}
         </div>
       ) : tab === 'Wallets' ? (
-        <ItemManager
-          title="Wallets"
+        <WalletSection
           items={wallets}
           setItems={setWallets}
-          showType={false}
           endpoint="/wallets"
         />
       ) : (
-        <ItemManager
+       <ItemManager
           title="Tags"
           items={tags}
           setItems={setTags}

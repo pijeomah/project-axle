@@ -17,10 +17,13 @@ const allowedOrigins = [
   'http://localhost:5173',
   'https://project-tally.vercel.app',
 ]
+
+
  const app = express()
  const PORT = process.env.PORT || 5000
 
-
+app.use(helmet())
+app.use(morgan('dev'))
 app.use(cors(
   {origin: allowedOrigins,}
 ))
@@ -54,7 +57,7 @@ app.use((err, req,res,next) => {
 app.use((req,res) => {
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: 'Route not available'
   })
 })
 

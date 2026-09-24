@@ -114,3 +114,7 @@ If a proposed change affects ledger integrity, transaction posting, wallet seman
 Preserving accounting correctness takes priority over implementation convenience.
 
 #Licensing
+Axle is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+
+You are free to use, study, and modify the software, but if you deploy a modified version as a networked service, you must also make the modified source code available under the same license.
+Copyright (c) 2026 Promise Ijeomah

@@ -1,21 +1,32 @@
 import express from 'express' 
 import dotenv from 'dotenv'
 import cors from 'cors'
-import categoriesRoutes from './routes/categories.js'
-import authRoutes from './routes/auth.js'
-import transactionRoutes from './routes/transactions.js'
-import accountsRoutes from './routes/accounts.js'
-import paymentMethodRoutes from './routes/payment-methods.js'
+import authV2Routes from './routes/v2/auth.js'
+import transactionsV2Routes from './routes/v2/transactions.js'
+import walletsV2Routes from './routes/v2/wallets.js'
+import tagsV2Routes from './routes/v2/tags.js'
+import dashboardV2Routes from './routes/v2/dashboard.js'
+import helmet from 'helmet'
+import morgan from 'morgan'
+
 import  supabase  from './config/supabase.js'
 
 
 dotenv.config()
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://project-tally.vercel.app',
+]
+
 
  const app = express()
  const PORT = process.env.PORT || 5000
 
-
-app.use(cors())
+app.use(helmet())
+app.use(morgan('dev'))
+app.use(cors(
+  {origin: allowedOrigins,}
+))
 app.use(express.json())
 
 
@@ -26,11 +37,12 @@ app.get('/', (req, res) =>{
 })
 
 
-app.use('/api/auth', authRoutes)
-app.use('/api/categories', categoriesRoutes)
-app.use('/api/transactions', transactionRoutes)
-app.use('/api/accounts', accountsRoutes)
-app.use('/api/payment-methods', paymentMethodRoutes)
+app.use('/api/v2/auth', authV2Routes)
+app.use('/api/v2/wallets', walletsV2Routes)
+app.use('/api/v2/transactions', transactionsV2Routes)
+app.use('/api/v2/tags', tagsV2Routes)
+app.use('/api/v2/dashboard', dashboardV2Routes)
+
 
 // Server Error handling
 app.use((err, req,res,next) => {
@@ -45,7 +57,7 @@ app.use((err, req,res,next) => {
 app.use((req,res) => {
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: 'Route not available'
   })
 })
 
